@@ -1,99 +1,147 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { Products } from './Products'
-import { Sidebar } from './Sidebar'
+import React, { useEffect, useState, useCallback } from "react";
+import { Products } from "./Products";
+import { Sidebar } from "./Sidebar";
 
-export const ProductSection = ({ handleAddToCart, cart }) => {
-    const [products, setProducts] = useState([])
-    const [filters, setFilters] = useState({
-        Type: {},
-        Colour: {},
-        Price: {},
-        Gender: {}
-    })
-    const [SearchTerm, setSearchTerm] = useState("")
+export const ProductSection = ({
+  handleAddToCart,
+  cart,
+  errorMessages,
+  handleRemoveFromCart,
+}) => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    Type: {},
+    Colour: {},
+    Price: {},
+    Gender: {},
+  });
+  const [SearchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const apiUrl = process.env.REACT_APP_PRODUCT_DETAILS_URL
+  const apiUrl = process.env.REACT_APP_PRODUCT_DETAILS_URL;
 
-    useEffect(() => {
-        fetchproducts()
-    }, [filters, SearchTerm])
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-    const fetchproducts = useCallback(async () => {
-        try {
-            if (!apiUrl) {
-                throw new Error('API URL is undefined. Check your .env file.');
-            }
-            const response = await fetch(apiUrl)
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const responseData = await response.json()
-            const filteredData = responseData.filter(product => {
-                if (SearchTerm.length >= 3) {
-                    const searchFields = [product.color, product.type, product.name, product.gender];
-                    const searchMatch = searchFields.some(field =>
-                        field.toLowerCase().includes(SearchTerm.toLowerCase())
-                    );
-                    if (!searchMatch) return false;
-                }
-                if (Object.keys(filters.Colour).length > 0) {
-                    const activeColors = Object.keys(filters.Colour).filter(color => filters.Colour[color]);
-                    if (activeColors.length > 0 && !activeColors.includes(product.color)) {
-                        return false;
-                    }
-                }
-                if (Object.keys(filters.Gender).length > 0) {
-                    const activeGenders = Object.keys(filters.Gender).filter(gender => filters.Gender[gender]);
-                    if (activeGenders.length > 0 && !activeGenders.includes(product.gender)) {
-                        return false;
-                    }
-                }
-                if (Object.keys(filters.Type).length > 0) {
-                    const activeTypes = Object.keys(filters.Type).filter(type => filters.Type[type]);
-                    if (activeTypes.length > 0 && !activeTypes.includes(product.type)) {
-                        return false;
-                    }
-                }
-                if (Object.keys(filters.Price).length > 0) {
-                    const activePriceRanges = Object.keys(filters.Price).filter(range => filters.Price[range]);
-                    if (activePriceRanges.length > 0) {
-                        const priceMatch = activePriceRanges.some(range => {
-                            if (range === "Rs 450+") {
-                                return product.price >= 450;
-                            } else {
-                                const [min, max] = range.replace("Rs ", "").split("-").map(Number);
-                                return product.price >= min && product.price <= max;
-                            }
-                        });
-                        if (!priceMatch) return false;
-                    }
-                }
-                return true;
-            })
-            setProducts(() => [...filteredData])
-        } catch (e) {
-            console.error(e)
-        }
-    }, [filters, SearchTerm, apiUrl])
+  useEffect(() => {
+    applyFilters();
+  }, [filters, SearchTerm, products]);
 
-    const updateFilters = (category, filter) => {
-        setFilters(prevState => ({
-            ...prevState,
-            [category]: {
-                ...prevState[category],
-                [filter]: !prevState[category]?.[filter],
-            },
-        }))
+  const fetchProducts = useCallback(async () => {
+    try {
+      if (!apiUrl) {
+        throw new Error("API URL is undefined. Check your .env file.");
+      }
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const responseData = await response.json();
+      setLoading(true);
+      setProducts(responseData);
+      setFilteredProducts(responseData);
+    } catch (e) {
+      console.error(e);
     }
+  }, [apiUrl]);
 
-    return (
-        <div className='flex w-full gap-10 h-full'>
-            <div className='w-1/2 lg:w-2/5 xl:w-1/4 hidden md:block'>
-                <Sidebar filters={filters} updateFilters={updateFilters} setFilters={setFilters} />
-            </div>
-            <div className='w-full md:w-1/2 lg:w-3/5 xl:w-3/4 h-full flex'>
-                <Products products={products} SearchTerm={SearchTerm} setSearchTerm={setSearchTerm} handleAddToCart={handleAddToCart} cart={cart} />
-            </div>
+  const priceRanges = [
+    { name: "0-250", min: 0, max: 250 },
+    { name: "251-450", min: 251, max: 450 },
+    { name: "451+", min: 451, max: Infinity },
+  ];
+
+  const applyFilters = useCallback(() => {
+    const filteredData = products.filter((product) => {
+      if (SearchTerm.length >= 3) {
+        const searchFields = [
+          product.color,
+          product.type,
+          product.price.toString(),
+          product.gender,
+        ];
+        const searchMatch = searchFields.some((field) =>
+          field.toLowerCase().includes(SearchTerm.toLowerCase())
+        );
+        if (!searchMatch) return false;
+      }
+      const activeFilters = Object.keys(filters).filter((category) =>
+        Object.values(filters[category]).some((value) => value)
+      );
+      if (activeFilters.length === 0) return true;
+      return activeFilters.every((category) => {
+        const activeOptions = Object.keys(filters[category]).filter(
+          (option) => filters[category][option]
+        );
+        if (activeOptions.length === 0) return true;
+
+        if (category === "Price") {
+          return activeOptions.some((rangeName) => {
+            const range = priceRanges.find((r) => r.name === rangeName);
+            if (!range) {
+              console.warn(`Price range not found for: ${rangeName}`);
+              return false;
+            }
+            return product.price >= range.min && product.price <= range.max;
+          });
+        }
+        return activeOptions.includes(product[category.toLowerCase()]);
+      });
+    });
+    setFilteredProducts(filteredData);
+  }, [filters, SearchTerm, products]);
+
+  const updateFilters = (category, value) => {
+    setFilters((prevFilters) => {
+      const updatedCategory = { ...prevFilters[category] };
+      updatedCategory[value] = !updatedCategory[value];
+      const updatedFilters = { ...prevFilters, [category]: updatedCategory };
+      Object.keys(updatedFilters).forEach((key) => {
+        if (Object.values(updatedFilters[key]).every((v) => !v)) {
+          delete updatedFilters[key];
+        }
+      });
+      return updatedFilters;
+    });
+  };
+
+  return (
+    <div class="flex w-full lg:gap-10 h-full">
+      {loading ? (
+        <>
+          <div class="w-full md:w-1/5 hidden md:block ">
+            <Sidebar
+              filters={filters}
+              products={products}
+              updateFilters={updateFilters}
+              priceRanges={priceRanges}
+              className="top-0 sticky p-8"
+            />
+          </div>
+          <div class="w-full md:w-4/5 h-full flex">
+            <Products
+              products={filteredProducts}
+              SearchTerm={SearchTerm}
+              setSearchTerm={setSearchTerm}
+              handleAddToCart={handleAddToCart}
+              cart={cart}
+              errorMessages={errorMessages}
+              handleRemoveFromCart={handleRemoveFromCart}
+              filters={filters}
+              updateFilters={updateFilters}
+              priceRanges={priceRanges}
+              allProducts={products}
+            />
+          </div>
+        </>
+      ) : (
+        <div class="w-full flex items-center justify-center text-2xl font-bold">
+          Loading...
+          <div class="border-t-2 p-4 rounded-full border-blue-500 animate-spin ml-2"></div>
         </div>
-    )
-}
+      )}
+    </div>
+  );
+};
