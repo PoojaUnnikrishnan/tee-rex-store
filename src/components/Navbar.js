@@ -29,10 +29,10 @@ export const Navbar = ({ cart }) => {
             <div class="flex items-center">
               <a
                 href="/cart"
-                class="relative flex-shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                class="relative flex-shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-none "
               >
                 <p class="absolute top-0 -right-2 font-bold text-sm">
-                  {Object.keys(cart).length}
+                  {Object.keys(cart).length ? Object.keys(cart).length : ""}
                 </p>
                 <Cart />
               </a>
