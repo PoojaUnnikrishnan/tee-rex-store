@@ -50,7 +50,7 @@ export const Cart = ({
                             <div class="flex justify-between">
                               <h3 class="text-sm">
                                 <a
-                                  href="#"
+                                  href="/"
                                   class="font-medium text-gray-700 hover:text-gray-800"
                                 >
                                   {cart[key].name}
@@ -147,7 +147,7 @@ export const Cart = ({
                     <dt class="flex items-center text-sm text-gray-600">
                       <span>Shipping estimate</span>
                       <a
-                        href="#"
+                        href="/"
                         class="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-500"
                       >
                         <svg
@@ -173,7 +173,7 @@ export const Cart = ({
                     <dt class="flex text-sm text-gray-600">
                       <span>Tax estimate</span>
                       <a
-                        href="#"
+                        href="/"
                         class="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-500"
                       >
                         <svg
