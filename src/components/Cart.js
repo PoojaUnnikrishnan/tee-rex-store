@@ -9,17 +9,17 @@ export const Cart = ({
   const [totalAmount, setTotalAmount] = useState(0);
 
   useEffect(() => {
+    const calculateTotal = () => {
+      const total = Object.values(cart).reduce(
+        (sum, item) => sum + item.price * item.qty,
+        0
+      );
+      setTotalAmount(total);
+    };
     console.log("Cart updated in Cart component:", cart);
     calculateTotal();
   }, [cart]);
 
-  const calculateTotal = () => {
-    const total = Object.values(cart).reduce(
-      (sum, item) => sum + item.price * item.qty,
-      0
-    );
-    setTotalAmount(total);
-  };
   return (
     <div class="bg-white">
       <div class="mx-auto max-w-2xl px-4 pb-24 pt-16 sm:px-6 lg:max-w-7xl lg:px-8">

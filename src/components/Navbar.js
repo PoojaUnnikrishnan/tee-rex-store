@@ -26,7 +26,7 @@ export const Navbar = ({ cart }) => {
             </div>
           </div>
           <div class="mr-4">
-            <div class="flex items-center">
+            <div class="flex h-8 w-8 items-center">
               <a
                 href="/cart"
                 class="relative flex-shrink-0 rounded-full p-1 text-gray-400 hover:text-white focus:outline-none "

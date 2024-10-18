@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Products } from "./Products";
 import { Sidebar } from "./Sidebar";
 
@@ -21,14 +21,6 @@ export const ProductSection = ({
 
   const apiUrl = process.env.REACT_APP_PRODUCT_DETAILS_URL;
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [filters, SearchTerm, products]);
-
   const fetchProducts = useCallback(async () => {
     try {
       if (!apiUrl) {
@@ -47,11 +39,15 @@ export const ProductSection = ({
     }
   }, [apiUrl]);
 
-  const priceRanges = [
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const priceRanges = useMemo(() => [
     { name: "0-250", min: 0, max: 250 },
     { name: "251-450", min: 251, max: 450 },
     { name: "451+", min: 451, max: Infinity },
-  ];
+  ], []);
 
   const applyFilters = useCallback(() => {
     const filteredData = products.filter((product) => {
@@ -91,7 +87,11 @@ export const ProductSection = ({
       });
     });
     setFilteredProducts(filteredData);
-  }, [filters, SearchTerm, products]);
+  }, [products, SearchTerm, filters, priceRanges]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, SearchTerm, products, applyFilters]);
 
   const updateFilters = (category, value) => {
     setFilters((prevFilters) => {
