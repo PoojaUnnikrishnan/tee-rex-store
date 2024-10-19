@@ -22,7 +22,7 @@ export const SearchBar = ({
             Search
           </label>
           <div class="relative">
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 search-button-container">
               <svg
                 class="h-5 w-5 text-gray-400"
                 viewBox="0 0 20 20"
